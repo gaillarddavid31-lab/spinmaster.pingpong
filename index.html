@@ -1,23 +1,360 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Titre de ma page</title>
-    <!-- Lien vers la feuille de style CSS -->
-    <link rel="stylesheet" href="style.css">
+    <title>SpinMaster - Tournoi Ping Pong Interservices Aureilhan</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        orange: {
+                            500: '#FF6600',
+                            600: '#E05500',
+                            700: '#CC4400',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans pb-12">
 
-    <header>
-        <h1>Bienvenue sur mon site</h1>
+    <!-- BARRE DE NAVIGATION HEADER -->
+    <header class="bg-slate-800/90 border-b border-slate-700 sticky top-0 z-40 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-orange-500 p-2 rounded-xl text-white font-black text-xl shadow-lg shadow-orange-500/20">
+                    🏓
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-tight text-white flex items-center gap-2">
+                        SpinMaster <span class="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30">Orange Aureilhan</span>
+                    </h1>
+                    <p class="text-xs text-emerald-400 flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        Synchronisation Cloud Temps Réel Active
+                    </p>
+                </div>
+            </div>
+
+            <!-- MENU TABS -->
+            <nav class="flex items-center bg-slate-900/60 p-1 rounded-xl border border-slate-700/60">
+                <button onclick="switchTab('register')" id="tab-register" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-orange-500 text-white shadow">
+                    📱 Inscription Mobile
+                </button>
+                <button onclick="switchTab('players')" id="tab-players" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">
+                    👥 Participants (<span id="player-count">0</span>)
+                </button>
+                <button onclick="switchTab('groups')" id="tab-groups" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">
+                    📊 Poules
+                </button>
+                <button onclick="switchTab('bracket')" id="tab-bracket" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">
+                    🏆 Phase Finale
+                </button>
+                <button onclick="switchTab('qrcode')" id="tab-qrcode" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">
+                    🔗 QR Code Affiche
+                </button>
+            </nav>
+        </div>
     </header>
 
-    <main>
-        <p>Ceci est le contenu principal de la page.</p>
+    <main class="max-w-7xl mx-auto px-4 mt-6">
+
+        <!-- NOTIFICATION BANNER -->
+        <div id="toast-banner" class="hidden fixed bottom-6 right-6 z-50 bg-slate-800 border-2 border-orange-500 text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center space-x-3 transition-all transform translate-y-0">
+            <span class="text-2xl">🎉</span>
+            <div>
+                <h4 class="font-bold text-sm" id="toast-title">Nouveau joueur inscrit !</h4>
+                <p class="text-xs text-slate-300" id="toast-body">Un participant vient d'être ajouté.</p>
+            </div>
+        </div>
+
+        <!-- VIEW 1: INSCRIPTION MOBILE (SCAN QR CODE LANDING) -->
+        <section id="view-register" class="space-y-6">
+            <div class="max-w-md mx-auto bg-slate-800 border border-slate-700 rounded-3xl p-6 sm:p-8 shadow-2xl">
+                <div class="text-center mb-6">
+                    <div class="inline-block p-3 bg-orange-500/10 rounded-2xl mb-2 text-orange-500">
+                        <i data-lucide="user-plus" class="w-8 h-8 mx-auto"></i>
+                    </div>
+                    <h2 class="text-2xl font-black text-white">Inscription Tournoi</h2>
+                    <p class="text-xs text-slate-400 mt-1">Tournoi Interservices — Site d'Aureilhan</p>
+                </div>
+
+                <form id="mobile-reg-form" onsubmit="handleMobileRegister(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Prénom</label>
+                        <input type="text" id="reg-firstname" required placeholder="Ex: David" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Nom</label>
+                        <input type="text" id="reg-lastname" required placeholder="Ex: Gaillard" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Entité / Service</label>
+                        <select id="reg-entity" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors">
+                            <option value="">Sélectionnez votre service...</option>
+                            <option value="Études & Réseau">Études & Réseau</option>
+                            <option value="Intervention / Tech">Intervention / Tech</option>
+                            <option value="RH / Management">RH / Management</option>
+                            <option value="Finance / Gestion">Finance / Gestion</option>
+                            <option value="Commercial / Vente">Commercial / Vente</option>
+                            <option value="Autre Service">Autre Service</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-orange-500/25 active:scale-95 flex items-center justify-center space-x-2 text-sm mt-2">
+                        <span>Valider mon inscription</span>
+                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                    </button>
+                </form>
+
+                <div id="reg-success-msg" class="hidden text-center py-6 space-y-3">
+                    <div class="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+                        ✓
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Inscription Validée !</h3>
+                    <p class="text-xs text-slate-300">Votre profil est enregistré sur le tableau d'affichage du tournoi d'Aureilhan.</p>
+                    <button onclick="resetRegForm()" class="text-xs text-orange-400 hover:underline pt-2 inline-block">Inscrire une autre personne</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 2: LISTE DES PARTICIPANTS -->
+        <section id="view-players" class="hidden space-y-6">
+            <div class="flex justify-between items-center flex-wrap gap-4 bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Participants inscrits</h2>
+                    <p class="text-xs text-slate-400">Les collaborateurs inscrits en temps réel apparaissent ci-dessous.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="seedDemoPlayers()" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs font-semibold transition-all">
+                        ➕ Charger 8 démos
+                    </button>
+                    <button onclick="clearAllPlayers()" class="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl text-xs font-semibold transition-all">
+                        🗑️ Réinitialiser
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="players-grid">
+                <!-- Les cartes joueurs seront insérées ici -->
+            </div>
+        </section>
+
+        <!-- VIEW 3: POULES -->
+        <section id="view-groups" class="hidden space-y-6">
+            <div class="flex justify-between items-center flex-wrap gap-4 bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Phase de Poules</h2>
+                    <p class="text-xs text-slate-400">Génération automatique et calcul des classements.</p>
+                </div>
+                <button onclick="generateGroups()" class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-orange-500/20">
+                    🎲 Générer / Mélanger les Poules
+                </button>
+            </div>
+
+            <div id="groups-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Poules générées ici -->
+            </div>
+        </section>
+
+        <!-- VIEW 4: PHASE FINALE (BRACKET) -->
+        <section id="view-bracket" class="hidden space-y-6">
+            <div class="flex justify-between items-center flex-wrap gap-4 bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Tableau d'Élimination Directe</h2>
+                    <p class="text-xs text-slate-400">Croisement automatique des qualifiés de poules.</p>
+                </div>
+                <button onclick="generateBracketFromGroups()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20">
+                    ⚡ Lancer la Phase Finale
+                </button>
+            </div>
+
+            <div id="bracket-container" class="flex justify-around items-center min-h-[400px] overflow-x-auto p-4 bg-slate-800/40 rounded-3xl border border-slate-700/50">
+                <!-- Arbre du tournoi ici -->
+            </div>
+        </section>
+
+        <!-- VIEW 5: QR CODE GENERATOR -->
+        <section id="view-qrcode" class="hidden space-y-6">
+            <div class="max-w-2xl mx-auto bg-slate-800 border border-slate-700 rounded-3xl p-6 text-center space-y-6 shadow-2xl">
+                <div>
+                    <span class="bg-orange-500/20 text-orange-400 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Affiche & Inscription Mobile</span>
+                    <h2 class="text-2xl font-black text-white mt-2">QR Code d'Inscription en Direct</h2>
+                    <p class="text-xs text-slate-400 mt-1">
+                        Scannez ce QR code avec un smartphone pour ouvrir la page d'inscription.
+                    </p>
+                </div>
+
+                <div class="flex justify-center my-4">
+                    <div class="bg-white p-4 rounded-2xl shadow-2xl inline-block border-4 border-orange-500" id="qrcode-box"></div>
+                </div>
+
+                <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-700 text-left space-y-2">
+                    <p class="text-xs font-bold text-slate-300">💡 URL de cette application :</p>
+                    <input type="text" id="app-url-input" readonly class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-orange-400 font-mono" value="">
+                </div>
+            </div>
+        </section>
+
     </main>
 
-    <!-- Lien vers le fichier JavaScript -->
-    <script src="script.js"></script>
+    <!-- JS APPLICATION -->
+    <script>
+        // Store principal
+        let state = {
+            players: JSON.parse(localStorage.getItem('spinmaster_players') || '[]'),
+            groups: JSON.parse(localStorage.getItem('spinmaster_groups') || '[]'),
+            bracketMatches: JSON.parse(localStorage.getItem('spinmaster_bracket') || '[]')
+        };
+
+        function saveState() {
+            localStorage.setItem('spinmaster_players', JSON.stringify(state.players));
+            localStorage.setItem('spinmaster_groups', JSON.stringify(state.groups));
+            localStorage.setItem('spinmaster_bracket', JSON.stringify(state.bracketMatches));
+            updateUI();
+        }
+
+        function switchTab(tabName) {
+            ['register', 'players', 'groups', 'bracket', 'qrcode'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white";
+            });
+
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabName}`).className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-orange-500 text-white shadow";
+
+            if (tabName === 'qrcode') renderQRCode();
+        }
+
+        function handleMobileRegister(e) {
+            e.preventDefault();
+            const fn = document.getElementById('reg-firstname').value.trim();
+            const ln = document.getElementById('reg-lastname').value.trim();
+            const ent = document.getElementById('reg-entity').value;
+
+            if (!fn || !ln || !ent) return;
+
+            const newPlayer = {
+                id: Date.now().toString(),
+                firstname: fn,
+                lastname: ln,
+                entity: ent,
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            };
+
+            state.players.push(newPlayer);
+            saveState();
+
+            document.getElementById('mobile-reg-form').classList.add('hidden');
+            document.getElementById('reg-success-msg').classList.remove('hidden');
+
+            showToast("Nouveau participant !", `${fn} ${ln} (${ent}) s'est inscrit.`);
+        }
+
+        function resetRegForm() {
+            document.getElementById('reg-firstname').value = '';
+            document.getElementById('reg-lastname').value = '';
+            document.getElementById('reg-entity').value = '';
+            document.getElementById('mobile-reg-form').classList.remove('hidden');
+            document.getElementById('reg-success-msg').classList.add('hidden');
+        }
+
+        function showToast(title, body) {
+            const toast = document.getElementById('toast-banner');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-body').innerText = body;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 4000);
+        }
+
+        function updateUI() {
+            document.getElementById('player-count').innerText = state.players.length;
+            renderPlayersGrid();
+        }
+
+        function renderPlayersGrid() {
+            const grid = document.getElementById('players-grid');
+            if (state.players.length === 0) {
+                grid.innerHTML = `<p class="col-span-full text-center text-slate-500 text-sm py-12">Aucun participant inscrit pour l'instant.</p>`;
+                return;
+            }
+
+            grid.innerHTML = state.players.map(p => `
+                <div class="bg-slate-800 border border-slate-700/80 p-4 rounded-2xl flex justify-between items-center shadow-md">
+                    <div>
+                        <h4 class="font-bold text-white text-sm">${p.firstname} ${p.lastname}</h4>
+                        <span class="inline-block bg-orange-500/10 text-orange-400 text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 border border-orange-500/20">${p.entity}</span>
+                    </div>
+                    <button onclick="deletePlayer('${p.id}')" class="text-slate-500 hover:text-red-400 text-xs p-1">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function deletePlayer(id) {
+            state.players = state.players.filter(p => p.id !== id);
+            saveState();
+        }
+
+        function seedDemoPlayers() {
+            const demos = [
+                { id: '1', firstname: 'David', lastname: 'Gaillard', entity: 'Études & Réseau' },
+                { id: '2', firstname: 'Sophie', lastname: 'Martin', entity: 'RH / Management' },
+                { id: '3', firstname: 'Thomas', lastname: 'Dupont', entity: 'Intervention / Tech' },
+                { id: '4', firstname: 'Lucas', lastname: 'Bernard', entity: 'Finance / Gestion' },
+                { id: '5', firstname: 'Emma', lastname: 'Petit', entity: 'Commercial / Vente' },
+                { id: '6', firstname: 'Nicolas', lastname: 'Roux', entity: 'Études & Réseau' },
+                { id: '7', firstname: 'Julie', lastname: 'Moreau', entity: 'Intervention / Tech' },
+                { id: '8', firstname: 'Alexandre', lastname: 'Lefebvre', entity: 'RH / Management' }
+            ];
+            state.players = demos;
+            saveState();
+            showToast("Données chargées", "8 participants de démonstration ajoutés.");
+        }
+
+        function clearAllPlayers() {
+            if (confirm("Voulez-vous vraiment effacer tous les participants ?")) {
+                state.players = [];
+                state.groups = [];
+                state.bracketMatches = [];
+                saveState();
+            }
+        }
+
+        function renderQRCode() {
+            const box = document.getElementById('qrcode-box');
+            box.innerHTML = '';
+            const currentUrl = window.location.href.split('#')[0];
+            document.getElementById('app-url-input').value = currentUrl;
+
+            new QRCode(box, {
+                text: currentUrl,
+                width: 200,
+                height: 200,
+                colorDark: "#FF6600",
+                colorLight: "#ffffff"
+            });
+        }
+
+        // Auto-init
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            updateUI();
+        });
+    </script>
 </body>
 </html>
